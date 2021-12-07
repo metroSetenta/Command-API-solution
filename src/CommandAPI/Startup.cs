@@ -8,32 +8,41 @@ using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Configuration;
+using Microsoft.EntityFrameworkCore;
 
 namespace CommandAPI
 {
-    public class Startup
+  public class Startup
+  {
+    public IConfiguration Configuration { get; }
+    public Startup(IConfiguration configuration)
     {
-        
-        public void ConfigureServices(IServiceCollection services)
-        {
-            services.AddControllers();
-
-            services.AddScoped<ICommandAPIRepo, MockCommandAPIRepo>();
-        }
-        
-        public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
-        {
-            if (env.IsDevelopment())
-            {
-                app.UseDeveloperExceptionPage();
-            }
-
-            app.UseRouting();
-
-            app.UseEndpoints(endpoints =>
-            {
-                endpoints.MapControllers();
-            });
-        }
+      Configuration = configuration;
     }
+    public void ConfigureServices(IServiceCollection services)
+    {
+      services.AddDbContext<CommandContext>(opt => opt.UseNpgsql
+      (Configuration.GetConnectionString("PostgreSqlConnection")));
+
+      services.AddControllers();
+
+      services.AddScoped<ICommandAPIRepo, SqlCommandAPIRepo>();
+    }
+
+    public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
+    {
+      if (env.IsDevelopment())
+      {
+        app.UseDeveloperExceptionPage();
+      }
+
+      app.UseRouting();
+
+      app.UseEndpoints(endpoints =>
+      {
+        endpoints.MapControllers();
+      });
+    }
+  }
 }
